@@ -1,0 +1,10 @@
+# Use a small stable nginx image
+FROM nginx:stable-alpine
+
+# Remove the default nginx index (optional) and copy our index.html
+COPY index.html /usr/share/nginx/html/index.html
+
+# Expose port 80 for the web server
+EXPOSE 80
+
+# Use default nginx CMD from the base image (no need to override)
