@@ -1,0 +1,41 @@
+trigger:
+- main  # Trigger on commits to main branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'acrnoor.azurecr.io/ice1-demo'  # Your ACR login server & repo name
+
+stages:
+- stage: Build
+  displayName: Build and Push Docker Image
+  jobs:
+  - job: Build
+    displayName: Build Docker Image
+    steps:
+    - task: Docker@2
+      displayName: Build and Push Docker Image
+      inputs:
+        command: buildAndPush
+        containerRegistry: 'acr-ice2'        # Docker Registry service connection
+        repository: 'ice1-demo'              # Docker repo name
+        dockerfile: '**/Dockerfile'          # Path to Dockerfile
+        tags: |
+          $(Build.BuildId)
+
+- stage: Deploy
+  displayName: Deploy to Azure App Service
+  jobs:
+  - deployment: Deploy
+    environment: 'ice1-demo'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureWebAppContainer@2
+            displayName: Deploy to App Service
+            inputs:
+              azureSubscription: 'sc-azure-ice1'      # ARM service connection
+              appName: 'asp-ice1'                     # Your App Service name
+              containers: '$(imageName):$(Build.BuildId)'
